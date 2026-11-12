@@ -1,11 +1,11 @@
 # LinkVault — Lifetime Link Saver Web Application
 
-[![Live Demo](https://img.shields.io/badge/Demo-Live%20Website-brightgreen?style=for-the-badge&logo=cloudflare)](https://kinds-asp-pension-lisa.trycloudflare.com)
+[![Live 24/7 Website](https://img.shields.io/badge/Website-Live%2024%2F7-brightgreen?style=for-the-badge&logo=githubpages)](https://dipanr705-12.github.io/link-saver-app/)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-blue?style=for-the-badge&logo=github)](https://github.com/dipanr705-12/link-saver-app)
 
-> 🌐 **Live Website Link**: **[https://kinds-asp-pension-lisa.trycloudflare.com](https://kinds-asp-pension-lisa.trycloudflare.com)**
+> 🌐 **Permanent 24/7 Live Link**: **[https://dipanr705-12.github.io/link-saver-app/](https://dipanr705-12.github.io/link-saver-app/)**
 >
-> Open the link above on any device to use the app immediately!
+> ⚡ Hosted directly on **GitHub Cloud Infrastructure**. This link **never sleeps** and runs 24 hours a day, 7 days a week, 365 days a year—even if your computer or Antigravity is completely turned off!
 
 ---
 

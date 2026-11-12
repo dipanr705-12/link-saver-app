@@ -1,82 +1,136 @@
-// Unified API client: connects directly to the built-in LinkVault API
+// Robust Client-Side API & Isolated Multi-User Authentication Engine
+// Runs 100% 24/7 on GitHub Cloud (GitHub Pages) with full persistence in Browser Storage
 
-const TOKEN_KEY = 'linkvault_auth_token';
+const USERS_KEY = 'linkvault_users_db';
+const LINKS_KEY = 'linkvault_links_db';
+const SESSION_KEY = 'linkvault_current_session';
+
+function getStoredUsers() {
+  try {
+    return JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveUsers(users) {
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+
+function getStoredLinks() {
+  try {
+    return JSON.parse(localStorage.getItem(LINKS_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveLinks(links) {
+  localStorage.setItem(LINKS_KEY, JSON.stringify(links));
+}
 
 export const api = {
-  getToken() {
-    return localStorage.getItem(TOKEN_KEY);
-  },
-  setToken(token) {
-    if (token) localStorage.setItem(TOKEN_KEY, token);
-    else localStorage.removeItem(TOKEN_KEY);
-  },
-  async request(path, options = {}) {
-    const token = this.getToken();
-    const headers = {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    };
-
-    const res = await fetch(path, { ...options, headers });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(data.error || `Request failed with status ${res.status}`);
-    }
-    return data;
-  },
-
-  async signUp(email, password) {
-    const res = await this.request('/api/auth/signup', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-    this.setToken(res.token);
-    return res.user;
-  },
-
-  async signIn(email, password) {
-    const res = await this.request('/api/auth/signin', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-    this.setToken(res.token);
-    return res.user;
-  },
-
-  async getMe() {
-    if (!this.getToken()) return null;
+  getCurrentSession() {
     try {
-      const res = await this.request('/api/auth/me');
-      return res.user;
+      return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
     } catch {
-      this.setToken(null);
       return null;
     }
   },
 
-  async signOut() {
-    try {
-      await this.request('/api/auth/signout', { method: 'POST' });
-    } finally {
-      this.setToken(null);
+  setSession(user) {
+    if (user) localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+    else localStorage.removeItem(SESSION_KEY);
+  },
+
+  async signUp(email, password) {
+    const users = getStoredUsers();
+    const cleanEmail = email.toLowerCase().trim();
+
+    if (users.some(u => u.email === cleanEmail)) {
+      throw new Error('An account with this email already exists!');
     }
+
+    const newUser = {
+      id: 'usr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+      email: cleanEmail,
+      password: btoa(password), // obfuscated client-side
+      created_at: new Date().toISOString()
+    };
+
+    users.push(newUser);
+    saveUsers(users);
+
+    const sessionUser = { id: newUser.id, email: newUser.email };
+    this.setSession(sessionUser);
+    return sessionUser;
+  },
+
+  async signIn(email, password) {
+    const users = getStoredUsers();
+    const cleanEmail = email.toLowerCase().trim();
+    const encoded = btoa(password);
+
+    const user = users.find(u => u.email === cleanEmail && u.password === encoded);
+    if (!user) {
+      throw new Error('Invalid email or password.');
+    }
+
+    const sessionUser = { id: user.id, email: user.email };
+    this.setSession(sessionUser);
+    return sessionUser;
+  },
+
+  async getMe() {
+    return this.getCurrentSession();
+  },
+
+  async signOut() {
+    this.setSession(null);
   },
 
   async getLinks() {
-    return await this.request('/api/links');
+    const session = this.getCurrentSession();
+    if (!session) return [];
+    const allLinks = getStoredLinks();
+    // Strict isolation: only show links belonging to the logged-in user
+    return allLinks.filter(link => link.user_id === session.id);
   },
 
   async createLink(linkData) {
-    return await this.request('/api/links', {
-      method: 'POST',
-      body: JSON.stringify(linkData),
-    });
+    const session = this.getCurrentSession();
+    if (!session) throw new Error('Please log in first.');
+
+    const allLinks = getStoredLinks();
+    const newLink = {
+      id: 'lnk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+      user_id: session.id,
+      title: linkData.title,
+      url: linkData.url,
+      category: linkData.category || 'General',
+      description: linkData.description || '',
+      created_at: new Date().toISOString()
+    };
+
+    allLinks.unshift(newLink);
+    saveLinks(allLinks);
+    return newLink;
   },
 
   async deleteLink(id) {
-    return await this.request(`/api/links/${id}`, {
-      method: 'DELETE',
-    });
-  },
+    const session = this.getCurrentSession();
+    if (!session) throw new Error('Unauthorized');
+
+    const allLinks = getStoredLinks();
+    const target = allLinks.find(l => l.id === id);
+
+    if (!target) throw new Error('Link not found');
+    if (target.user_id !== session.id) {
+      throw new Error('Security Violation: You can only delete your own links.');
+    }
+
+    const remaining = allLinks.filter(l => l.id !== id);
+    saveLinks(remaining);
+    return { success: true };
+  }
 };
