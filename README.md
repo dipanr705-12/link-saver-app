@@ -1,6 +1,11 @@
 # LinkVault — Lifetime Link Saver Web Application
 
-A modern, fast, and secure web application to save and organize links permanently with individual user accounts and **Row-Level Security (RLS)** so nobody else can view or delete your links.
+[![Live Demo](https://img.shields.io/badge/Demo-Live%20Website-brightgreen?style=for-the-badge&logo=cloudflare)](https://kinds-asp-pension-lisa.trycloudflare.com)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-blue?style=for-the-badge&logo=github)](https://github.com/dipanr705-12/link-saver-app)
+
+> 🌐 **Live Website Link**: **[https://kinds-asp-pension-lisa.trycloudflare.com](https://kinds-asp-pension-lisa.trycloudflare.com)**
+>
+> Open the link above on any device to use the app immediately!
 
 ---
 
